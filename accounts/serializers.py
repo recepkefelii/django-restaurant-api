@@ -1,13 +1,14 @@
 from rest_framework import serializers
 from rest_framework.validators import ValidationError
 from .models import User
-
+from django.contrib.auth import authenticate
+from .tokens import create_jwt_pair_for_user
 
 
 class SignUpSerializer(serializers.ModelSerializer):
-    email=serializers.CharField(max_length=80)
+    
     username=serializers.CharField(max_length=45)
-    password=serializers.CharField(min_length=8,write_only=True)
+    
     class Meta:
         model = User
         fields = ['email','username','password']
@@ -34,5 +35,26 @@ class SignUpSerializer(serializers.ModelSerializer):
 
         return user
 
+
+class LoginSerializer(serializers.Serializer):
+    email=serializers.EmailField(max_length=80)
+    password=serializers.CharField(min_length=8,write_only=True)
+
+    def validate(self, attrs):
+        
+        user = authenticate(email=attrs['email'], password=attrs['password'])
+        if not user:
+            raise serializers.ValidationError("hatalı giriş")
+
+
+        tokens = create_jwt_pair_for_user(user)
+
+        attrs['token'] = tokens
+        return attrs
+    
+        
+
+           
+            
         
 

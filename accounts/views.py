@@ -1,11 +1,12 @@
-from django.contrib.auth import authenticate
+
 from rest_framework import generics, status
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .serializers import SignUpSerializer
-from .tokens import create_jwt_pair_for_user
-from .models import User
+from .serializers import SignUpSerializer,LoginSerializer
+
+
+
 from rest_framework import permissions, status
 
 # Create your views here.
@@ -32,23 +33,17 @@ class SignUpView(generics.GenericAPIView):
 
 class LoginView(APIView):
     permission_classes = []
-
+    serializer_class = LoginSerializer
     def post(self, request: Request):
-        email = request.data.get("email")
-        password = request.data.get("password")
+        serializer_class = self.serializer_class(data=request.data)
+        if serializer_class.is_valid():
+            token = serializer_class.validated_data['token']
+            return Response(data=token,status=status.HTTP_200_OK)
+            
+        
+       
 
-        user = authenticate(email=email, password=password)
-
-        if user is not None:
-
-            tokens = create_jwt_pair_for_user(user)
-
-            response = {"message": "Giris basarili", "tokens": tokens}
-            return Response(data=response, status=status.HTTP_200_OK)
-
-        else:
-            return Response(data={"message": "hatali sifre veya E-posta"})
-
+        
     def get(self, request: Request):
         content = {"user": str(request.user), "auth": str(request.auth)}
 
